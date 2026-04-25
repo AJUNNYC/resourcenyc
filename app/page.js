@@ -3,17 +3,24 @@ import { useState } from 'react'
 
 export default function Home() {
   const [input, setInput] = useState('')
+  const [files, setFiles] = useState([])
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit() {
-    if (!input.trim()) return
+    if (!input.trim() && files.length === 0) return
     setLoading(true)
     setResults([])
+
+    const formData = new FormData()
+    formData.append('userInput', input)
+    for (const file of files) {
+      formData.append('files', file)
+    }
+
     const res = await fetch('/api/match', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userInput: input })
+      body: formData
     })
     const data = await res.json()
     setResults(data.matches)
@@ -23,8 +30,11 @@ export default function Home() {
   return (
     <main style={{ maxWidth: 700, margin: '0 auto', padding: '40px 20px', fontFamily: 'sans-serif' }}>
       <h1 style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 8 }}>🗽 ResourceNYC</h1>
-      <p style={{ color: '#666', marginBottom: 24 }}>
+      <p style={{ color: '#666', marginBottom: 4 }}>
         Describe your situation in any language. We'll find the NYC programs that can help you.
+      </p>
+      <p style={{ color: '#999', fontSize: 13, marginBottom: 24 }}>
+        Write in any language · Escribe en cualquier idioma · 用任何语言写 · هر زبانی بنویسید
       </p>
 
       <textarea
@@ -35,10 +45,28 @@ export default function Home() {
         onChange={e => setInput(e.target.value)}
       />
 
+      <div style={{ marginTop: 12 }}>
+        <label style={{ display: 'block', marginBottom: 6, color: '#555', fontSize: 14 }}>
+          Upload documents (optional) — pay stubs, denial letters, IDs, leases, images
+        </label>
+        <input
+          type="file"
+          multiple
+          accept=".pdf,image/*"
+          onChange={e => setFiles(Array.from(e.target.files))}
+          style={{ fontSize: 14 }}
+        />
+        {files.length > 0 && (
+          <ul style={{ marginTop: 8, fontSize: 13, color: '#555' }}>
+            {files.map((f, i) => <li key={i}>📎 {f.name}</li>)}
+          </ul>
+        )}
+      </div>
+
       <button
         onClick={handleSubmit}
         disabled={loading}
-        style={{ marginTop: 12, padding: '12px 24px', fontSize: 16, backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+        style={{ marginTop: 16, padding: '12px 24px', fontSize: 16, backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}
       >
         {loading ? 'Finding resources...' : 'Find Resources'}
       </button>

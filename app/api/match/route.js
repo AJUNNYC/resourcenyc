@@ -8,7 +8,9 @@ const supabase = createClient(
 )
 
 export async function POST(req) {
-  const { userInput } = await req.json()
+  const formData = await req.formData()
+  const userInput = formData.get('userInput') || ''
+  const files = formData.getAll('files')
 
   const { data: resources } = await supabase
     .from('resources')
@@ -22,13 +24,29 @@ export async function POST(req) {
     URL: ${r.url_of_online_application}`
   ).join('\n\n')
 
-  const message = await anthropic.messages.create({
-    model: 'claude-opus-4-5',
-    max_tokens: 1024,
-    messages: [
-      {
-        role: 'user',
-        content: `You are a helpful NYC benefits assistant. A resident has described their situation. Match them to the most relevant programs from the list below. Return ONLY a JSON array of the top 5 matches, no other text. Each item should have: name, category, why_it_matches, how_to_apply, url.
+  const contentParts = []
+
+  for (const file of files) {
+    const arrayBuffer = await file.arrayBuffer()
+    const base64 = Buffer.from(arrayBuffer).toString('base64')
+    const mimeType = file.type
+
+    if (mimeType === 'application/pdf') {
+      contentParts.push({
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+      })
+    } else if (mimeType.startsWith('image/')) {
+      contentParts.push({
+        type: 'image',
+        source: { type: 'base64', media_type: mimeType, data: base64 }
+      })
+    }
+  }
+
+  contentParts.push({
+    type: 'text',
+    content: `You are a helpful NYC benefits assistant. A resident has described their situation and may have uploaded documents. Extract any relevant info from the documents and combine with their text description to match them to the most relevant programs. Return ONLY a JSON array of the top 5 matches, no other text. Each item should have: name, category, why_it_matches, how_to_apply, url.
 
 Respond in the same language the user wrote in.
 
@@ -39,8 +57,12 @@ ${resourceList}
 
 Return only a JSON array like:
 [{"name":"...","category":"...","why_it_matches":"...","how_to_apply":"...","url":"..."}]`
-      }
-    ]
+  })
+
+  const message = await anthropic.messages.create({
+    model: 'claude-opus-4-5',
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: contentParts }]
   })
 
   const raw = message.content[0].text
