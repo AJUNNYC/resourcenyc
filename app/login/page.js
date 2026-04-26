@@ -97,7 +97,9 @@ export default function Login() {
       return
     }
 
-    router.push('/')
+    // Send to onboarding if they haven't completed their profile yet
+    const hasProfile = !!localStorage.getItem('resourcenyc_programs')
+    router.push(hasProfile ? '/' : '/onboarding')
   }
 
   return (

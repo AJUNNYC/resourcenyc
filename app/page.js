@@ -71,30 +71,30 @@ const MOCK_PROGRAMS = [
     badge: 'High Priority', eligibility: 98,
     summary: 'Household of 3 earning $18,500/yr falls well below SNAP\'s 130% poverty threshold (~$30,000). With 2 dependent children, estimated monthly benefit of up to $740 loaded onto an EBT card.',
     nextStep: 'Apply online via ACCESS HRA — takes ~20 min. Bring ID, proof of income, and a utility bill.',
-    url: 'https://a069-access.nyc.gov', deadline: null, savings: '$740 / mo',
+    url: 'https://a069-access.nyc.gov/accesshra/', deadline: null, savings: '$740 / mo',
   },
   {
     id: 2, name: 'Medicaid', fullName: 'Free Health Insurance for Families',
     category: 'Health', Icon: LocalHospitalIcon, color: '#0077B6', bg: '#EEF7FC',
     badge: 'High Priority', eligibility: 99,
     summary: 'Family of 3 earning under $33,000/yr qualifies for full Medicaid — zero premiums, zero copays. Covers doctor visits, dental, vision, prescriptions, and mental health for all members.',
-    nextStep: 'Apply at nystateofhealth.ny.gov or walk into the nearest HRA office.',
-    url: 'https://nystateofhealth.ny.gov', deadline: null, savings: '$0 premiums',
+    nextStep: 'Apply at NY State of Health or walk into the nearest HRA office with ID and proof of income.',
+    url: 'https://nystateofhealth.ny.gov/', deadline: null, savings: '$0 premiums',
   },
   {
-    id: 3, name: 'Emergency Rental Assistance', fullName: 'NYC Housing Stability Program',
+    id: 3, name: 'Emergency Rental Assistance', fullName: 'NYC One Shot Deal / HRA Emergency Assistance',
     category: 'Housing', Icon: HomeIcon, color: '#7B2FBE', bg: '#F5EEFF',
     badge: 'Urgent', eligibility: 95,
-    summary: 'Behind on rent and earning below 80% AMI qualifies for emergency rental assistance covering up to 12 months of back-owed rent.',
-    nextStep: 'Contact HRA or visit the nearest DSS Benefits Access Center. Bring lease, landlord contact, and proof of income.',
-    url: 'https://www.nyc.gov/housing', deadline: 'Apply ASAP', savings: 'Up to $18,000',
+    summary: 'Behind on rent and earning below 80% AMI qualifies for emergency rental assistance covering back-owed rent.',
+    nextStep: 'Apply through HRA ACCESS or visit your local HRA Job Center. Bring lease, landlord info, and proof of income.',
+    url: 'https://www.nyc.gov/site/hra/help/emergency-rental-assistance-program.page', deadline: 'Apply ASAP', savings: 'Up to $18,000',
   },
   {
     id: 4, name: 'WIC Program', fullName: 'Women, Infants & Children Nutrition',
     category: 'Nutrition', Icon: ChildCareIcon, color: '#C0006A', bg: '#FFF0F7',
     badge: 'Recommended', eligibility: 90,
     summary: 'Provides monthly grocery benefits, formula, and free nutrition counseling. Income within 185% FPL qualifies. Covers children up to age 5.',
-    nextStep: 'Find a WIC clinic at wic4u.com or call 1-800-522-5006.',
+    nextStep: 'Find a WIC clinic or call 1-800-522-5006 to schedule an appointment.',
     url: 'https://www.health.ny.gov/prevention/nutrition/wic/', deadline: null, savings: '$60 / mo',
   },
   {
@@ -102,7 +102,7 @@ const MOCK_PROGRAMS = [
     category: 'Childcare', Icon: SchoolIcon, color: '#B45309', bg: '#FFFBEB',
     badge: 'Recommended', eligibility: 88,
     summary: 'NYC ACS subsidies cover up to 90% of daycare and after-school costs for children under 13 whose parent is working or in job training.',
-    nextStep: 'Apply at the nearest ACS office or call 311.',
+    nextStep: 'Apply at the nearest ACS Child Care office or call 311.',
     url: 'https://www.nyc.gov/site/acs/early-care/child-care-subsidies.page', deadline: null, savings: 'Up to $1,200 / mo',
   },
   {
@@ -110,7 +110,7 @@ const MOCK_PROGRAMS = [
     category: 'Utilities', Icon: ElectricBoltIcon, color: '#1D4ED8', bg: '#EFF6FF',
     badge: 'Seasonal', eligibility: 92,
     summary: 'Receive $300–$850 toward heating and utility bills each winter season if household income is under the HEAP limit.',
-    nextStep: 'Apply at the HRA Benefits Access Center or dial 311 and say "HEAP." Applications open in November.',
+    nextStep: 'Apply at an HRA Benefits Access Center or call 311. Applications open November through March.',
     url: 'https://www.nyc.gov/site/hra/help/heap.page', deadline: 'Nov – Mar season', savings: 'Up to $850',
   },
   {
@@ -118,16 +118,16 @@ const MOCK_PROGRAMS = [
     category: 'Financial', Icon: AttachMoneyIcon, color: '#047857', bg: '#ECFDF5',
     badge: 'Tax Benefit', eligibility: 97,
     summary: 'With 2 children and earned income under $30,000, qualifies for a combined federal + NYC EITC refund of up to $7,500. Fully refundable.',
-    nextStep: 'File taxes free through NYC Free Tax Prep (call 311) or a VITA site.',
+    nextStep: 'File taxes free through NYC Free Tax Prep (VITA sites). Call 311 or visit nyc.gov/taxprep to find a site.',
     url: 'https://www.nyc.gov/site/dca/consumers/file-your-taxes.page', deadline: 'April 15 deadline', savings: 'Up to $7,500 / yr',
   },
   {
-    id: 8, name: 'Unemployment Insurance', fullName: 'NY State UI Benefits',
+    id: 8, name: 'Unemployment Insurance', fullName: 'NY State Unemployment Insurance',
     category: 'Employment', Icon: WorkIcon, color: '#4338CA', bg: '#EEF2FF',
     badge: 'Time-Sensitive', eligibility: 85,
     summary: 'Recently laid off workers are eligible for up to $504/week in NY unemployment benefits for up to 26 weeks while seeking new employment.',
-    nextStep: 'File a claim at labor.ny.gov/ui or call 1-888-209-8124. There is a 7-day waiting period — apply now.',
-    url: 'https://labor.ny.gov/ui/claimantinfo/beforeyouapplyfaq.shtm', deadline: 'Apply within 30 days', savings: 'Up to $504 / wk',
+    nextStep: 'File a claim online at the NY DOL site or call 1-888-209-8124. Apply within 30 days of job loss.',
+    url: 'https://applications.labor.ny.gov/IndividualReg/', deadline: 'Apply within 30 days', savings: 'Up to $504 / wk',
   },
 ]
 
@@ -424,7 +424,11 @@ export default function Home() {
   const isCustomSearch = apiResults.length > 0
 
   const profileDisplay = storedProfile ? buildProfileDisplay(storedProfile) : null
-  const displayName = storedProfile?.firstName || user?.user_metadata?.first_name || (user?.email ? user.email.split('@')[0] : null)
+  const displayName = storedProfile
+    ? `${storedProfile.firstName || ''} ${storedProfile.lastName || ''}`.trim() || null
+    : user?.user_metadata?.first_name
+      ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
+      : (user?.email ? user.email.split('@')[0] : null)
   const initials = displayName ? displayName.slice(0, 2).toUpperCase() : 'NY'
 
   // Dynamic stats

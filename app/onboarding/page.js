@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Box, Typography, Button, LinearProgress, IconButton,
@@ -255,7 +255,7 @@ function LoadingScreen({ profile }) {
 
   useEffect(() => {
     if (stageIdx < stages.length - 1) {
-      const t = setTimeout(() => setStageIdx(i => i + 1), 1100)
+      const t = setTimeout(() => setStageIdx(i => i + 1), 1300)
       return () => clearTimeout(t)
     }
   }, [stageIdx])
@@ -314,9 +314,11 @@ export default function Onboarding() {
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const prefetchRef = useRef(null)
 
   const [profile, setProfile] = useState({
     firstName: '',
+    lastName: '',
     zip: '',
     adults: 1,
     children: 0,
@@ -343,10 +345,22 @@ export default function Onboarding() {
       setProfile(p => ({
         ...p,
         firstName: user.user_metadata?.first_name || '',
+        lastName: user.user_metadata?.last_name || '',
         zip: user.user_metadata?.zip || '',
       }))
     }
   }, [user])
+
+  // Pre-fetch AI results as soon as the user reaches the final step
+  useEffect(() => {
+    if (step === 4 && !prefetchRef.current) {
+      prefetchRef.current = fetch('/api/profile-match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      }).then(r => r.json()).catch(() => null)
+    }
+  }, [step])
 
   // Keep childrenAges array in sync with children count
   useEffect(() => {
@@ -388,13 +402,16 @@ export default function Onboarding() {
     setStep(5) // show loading screen
 
     try {
+      // Use pre-fetched result if available (started when user entered step 4)
+      const apiPromise = prefetchRef.current || fetch('/api/profile-match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      }).then(r => r.json())
+
       const [data] = await Promise.all([
-        fetch('/api/profile-match', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(profile),
-        }).then(r => r.json()),
-        new Promise(resolve => setTimeout(resolve, 5000)), // minimum animation time
+        apiPromise,
+        new Promise(resolve => setTimeout(resolve, 6500)), // minimum animation time
       ])
 
       if (!data.programs?.length) throw new Error('No programs returned. Please try again.')
@@ -448,7 +465,7 @@ export default function Onboarding() {
   ]
 
   const STEP_TITLES = [
-    'Your household',
+    'Let\'s get started',
     'Income & employment',
     'Your housing',
     'Health & current benefits',
@@ -456,7 +473,7 @@ export default function Onboarding() {
   ]
 
   const STEP_DESCS = [
-    'Tell us who lives with you — family programs depend on household size.',
+    'Tell us your name and who lives with you — family programs depend on household size.',
     'Your work and income determine which assistance programs you can access.',
     'Housing status unlocks rental, utility, and emergency assistance programs.',
     'Coverage gaps and current enrollments help us avoid duplicate suggestions.',
@@ -471,6 +488,36 @@ export default function Onboarding() {
       case 0:
         return (
           <Box>
+            {/* Name */}
+            <Box sx={{ mb: 3 }}>
+              <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: '#64748B', mb: 1.25, letterSpacing: 0.3 }}>
+                YOUR NAME
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
+                {[
+                  { placeholder: 'First name', key: 'firstName' },
+                  { placeholder: 'Last name', key: 'lastName' },
+                ].map(({ placeholder, key }) => (
+                  <Box
+                    key={key}
+                    sx={{
+                      border: '1.5px solid #E5E7EB', borderRadius: '11px', px: 1.75,
+                      backgroundColor: '#FAFAFA',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      '&:focus-within': { borderColor: '#003087', boxShadow: '0 0 0 3px rgba(0,48,135,0.1)', backgroundColor: '#fff' },
+                    }}
+                  >
+                    <InputBase
+                      fullWidth
+                      placeholder={placeholder}
+                      value={profile[key]}
+                      onChange={e => set(key)(e.target.value)}
+                      sx={{ fontSize: 15, color: '#0F172A', py: 1.1 }}
+                    />
+                  </Box>
+                ))}
+              </Box>
+            </Box>
             <NumberStepper label="Adults in your household" sublabel="Including yourself (age 18+)" value={profile.adults} onChange={set('adults')} min={1} max={8} />
             <NumberStepper label="Children" sublabel="Under 18 years old" value={profile.children} onChange={set('children')} min={0} max={8} />
             {profile.children > 0 && (

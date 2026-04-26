@@ -69,6 +69,7 @@ export default function SignUp() {
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', zip: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [errors, setErrors] = useState({})
   const [authError, setAuthError] = useState('')
 
@@ -83,6 +84,23 @@ export default function SignUp() {
     if (form.password.length < 6) e.password = true
     setErrors(e)
     return Object.keys(e).length === 0
+  }
+
+  async function handleGoogleSignIn() {
+    if (!supabase) {
+      setAuthError('Auth is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local')
+      return
+    }
+    setGoogleLoading(true)
+    setAuthError('')
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (error) {
+      setAuthError(error.message)
+      setGoogleLoading(false)
+    }
   }
 
   async function handleSubmit(e) {
@@ -110,9 +128,14 @@ export default function SignUp() {
     })
 
     if (error) {
-      setAuthError(error.message === 'User already registered'
-        ? 'An account with this email already exists. Try logging in.'
-        : error.message)
+      const msg = error.message || ''
+      if (msg.includes('rate limit') || msg.includes('rate exceeded') || msg.includes('email rate')) {
+        setAuthError('Too many sign-up attempts. Please wait a few minutes and try again, or ask the app admin to disable email confirmation in Supabase.')
+      } else if (msg === 'User already registered') {
+        setAuthError('An account with this email already exists. Try logging in.')
+      } else {
+        setAuthError(msg)
+      }
       setLoading(false)
       return
     }
@@ -315,11 +338,15 @@ export default function SignUp() {
               Free forever. No credit card. Start finding programs in under a minute.
             </Typography>
 
-            {/* Google SSO (visual) */}
+            {/* Google SSO */}
             <Button
               fullWidth
               variant="outlined"
-              startIcon={<GoogleIcon sx={{ fontSize: 18 }} />}
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+              startIcon={googleLoading
+                ? <CircularProgress size={16} sx={{ color: '#6B7280' }} />
+                : <GoogleIcon sx={{ fontSize: 18 }} />}
               sx={{
                 borderColor: '#E5E7EB',
                 color: '#374151',
@@ -330,9 +357,10 @@ export default function SignUp() {
                 py: 1.1,
                 mb: 2.5,
                 '&:hover': { borderColor: '#D1D5DB', backgroundColor: '#F9FAFB' },
+                '&:disabled': { borderColor: '#E5E7EB', color: '#9CA3AF' },
               }}
             >
-              Continue with Google
+              {googleLoading ? 'Redirecting to Google…' : 'Continue with Google'}
             </Button>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>

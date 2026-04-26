@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { Box, Typography, Avatar, Button, Divider, CircularProgress } from '@mui/material'
 import LocationCityIcon from '@mui/icons-material/LocationCity'
 import DashboardIcon from '@mui/icons-material/Dashboard'
@@ -63,14 +64,28 @@ function NavItem({ label, href, Icon, active, disabled }) {
 export function SideNav() {
   const pathname = usePathname()
   const { user, loading, signOut } = useAuth()
+  const [localFirstName, setLocalFirstName] = useState('')
 
-  const initials = user?.user_metadata?.first_name
-    ? `${user.user_metadata.first_name[0]}${user.user_metadata.last_name?.[0] || ''}`.toUpperCase()
-    : user?.email?.[0]?.toUpperCase() || '?'
+  const [localName, setLocalName] = useState({ first: '', last: '' })
 
-  const displayName = user?.user_metadata?.first_name
-    ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
+  useEffect(() => {
+    try {
+      const p = localStorage.getItem('resourcenyc_profile')
+      if (p) {
+        const profile = JSON.parse(p)
+        setLocalName({ first: profile.firstName || '', last: profile.lastName || '' })
+      }
+    } catch {}
+  }, [])
+
+  const firstName = user?.user_metadata?.first_name || localName.first
+  const lastName = user?.user_metadata?.last_name || localName.last
+  const displayName = firstName
+    ? `${firstName} ${lastName}`.trim()
     : user?.email || ''
+  const initials = firstName
+    ? `${firstName[0]}${lastName[0] || ''}`.toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || '?'
 
   return (
     <Box

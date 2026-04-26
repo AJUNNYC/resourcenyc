@@ -33,46 +33,79 @@ NYC Resident Profile:
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
-      system: `You are an expert NYC benefits navigator with deep knowledge of all government assistance programs for New York City residents. Analyze the applicant's profile and return programs they most likely qualify for.
+      system: `You are an expert NYC benefits navigator. Analyze the applicant's profile and return the top 6 programs they most likely qualify for.
 
-CRITICAL: Return ONLY a valid JSON array — no markdown, no explanation, just raw JSON starting with [ and ending with ].
+CRITICAL: Return ONLY a valid JSON array — no markdown, no explanation, no code fences. Start with [ and end with ].
 
-Each object in the array must have EXACTLY these fields:
+Each object must have EXACTLY these fields:
 {
-  "name": "short program name (e.g. SNAP Benefits)",
+  "name": "short program name",
   "fullName": "official full program name",
   "category": "one of: Food, Health, Housing, Childcare, Utilities, Financial, Employment, Education",
   "eligibility": <integer 75-99>,
-  "savings": "benefit value string (e.g. '$740 / mo', 'Up to $7,500 / yr', '$0 premiums', 'Up to $850')",
+  "savings": "benefit value (e.g. '$740 / mo', 'Up to $7,500 / yr', '$0 premiums')",
   "badge": "one of: High Priority, Urgent, Recommended, Seasonal, Tax Benefit, Time-Sensitive",
-  "summary": "2–3 sentences explaining WHY this specific person qualifies and what they will receive, referencing their actual data (income, household size, situation)",
-  "nextStep": "specific actionable steps to apply — include real office names, phone numbers, or websites",
-  "url": "real official URL to apply or learn more",
-  "deadline": "deadline string if time-sensitive, or null"
+  "summary": "1-2 sentences on why this person qualifies and what they get",
+  "nextStep": "how to apply — include a phone number or website",
+  "url": "exact official application URL from the verified list below",
+  "deadline": "deadline string or null"
 }
 
-Rank results by urgency and impact. Do NOT suggest programs the person is already enrolled in.`,
+VERIFIED APPLICATION URLs — use these exact URLs, do not invent others:
+- SNAP / Cash Assistance / Emergency Assistance / HRA programs: https://a069-access.nyc.gov/accesshra/
+- Medicaid / Child Health Plus / Essential Plan / NY State of Health marketplace: https://nystateofhealth.ny.gov/
+- WIC (Women Infants Children): https://www.health.ny.gov/prevention/nutrition/wic/
+- Emergency Rental Assistance / One Shot Deal: https://www.nyc.gov/site/hra/help/emergency-rental-assistance-program.page
+- CityFHEPS rental voucher: https://www.nyc.gov/site/hra/help/cityfheps.page
+- Section 8 / Housing Choice Voucher (NYCHA): https://www.nyc.gov/site/nycha/section-8/about-section-8.page
+- NYCHA public housing application: https://www.nyc.gov/site/nycha/apply/apply-for-housing.page
+- HEAP home energy assistance: https://www.nyc.gov/site/hra/help/heap.page
+- NYC Free Tax Prep / EITC / VITA sites: https://www.nyc.gov/site/dca/consumers/file-your-taxes.page
+- Child Tax Credit (federal): https://www.irs.gov/credits-deductions/individuals/child-tax-credit
+- NY Unemployment Insurance: https://applications.labor.ny.gov/IndividualReg/
+- ACS Child Care Subsidy: https://www.nyc.gov/site/acs/early-care/child-care-subsidies.page
+- Head Start: https://www.nyc.gov/site/acs/early-care/head-start.page
+- 3-K / Pre-K for All: https://www.nyc.gov/site/doe/enrollment/pre-k.page
+- SSI / SSDI disability benefits: https://www.ssa.gov/benefits/disability/
+- NYC veteran services: https://www.nyc.gov/site/veterans/veterans/veterans.page
+- DACA / immigration: https://www.uscis.gov/DACA
+- NYC Health + Hospitals (free clinics): https://www.nychealthandhospitals.org/patients/
+
+Rank by urgency. Do NOT suggest programs the person is already enrolled in.`,
       messages: [{
         role: 'user',
-        content: `Find the top 8–12 NYC and federal benefit programs for this applicant. Evaluate ALL aspects of their situation carefully.
+        content: `Find the top 6 NYC/federal benefit programs for this applicant.
 
 ${profileSummary}
 
-Programs to evaluate (not exhaustive):
-SNAP, Medicaid, Child Health Plus, Essential Plan, WIC, Emergency Rental Assistance (ERAP), CityFHEPS rental voucher, Section 8 / HCV, NYCHA public housing, HEAP (Home Energy Assistance), Earned Income Tax Credit (federal + NYC), Child Tax Credit, NYC Cash Assistance (Family Assistance / Safety Net Assistance), NY Unemployment Insurance, ACS Child Care Subsidy, Head Start, Universal Pre-K (3-K/Pre-K for All), NYC Free Tax Prep (VITA sites), NYC free health clinics, SSI/SSDI (if disability), NYC Emergency Food Pantry Network, Veteran benefits (if applicable), DACA-specific programs (if applicable), NYC Senior programs (if elderly).
+Consider: SNAP, Medicaid, Child Health Plus, Essential Plan, WIC, HEAP, Emergency Rental Assistance, CityFHEPS, NYCHA, EITC, Child Tax Credit, NYC Cash Assistance, NY Unemployment Insurance, ACS Child Care Subsidy, Head Start, Pre-K for All, VITA free tax prep, Veteran benefits, DACA programs, SSI/SSDI.
 
 Return ONLY the JSON array.`
       }],
     })
 
     const raw = message.content[0].text.trim()
-    const jsonMatch = raw.match(/\[[\s\S]*\]/)
-    if (!jsonMatch) throw new Error('No JSON array in response')
+
+    // Try direct parse first (cleanest path)
+    if (raw.startsWith('[')) {
+      try {
+        const programs = JSON.parse(raw)
+        return Response.json({ programs })
+      } catch {}
+    }
+
+    // Strip any markdown fences and extract array
+    const stripped = raw.replace(/```json\n?|```\n?/g, '').trim()
+    const jsonMatch = stripped.match(/\[[\s\S]*\]/)
+    if (!jsonMatch) {
+      console.error('No JSON array found. Raw response (first 500 chars):', raw.slice(0, 500))
+      throw new Error('AI returned an unexpected response. Please try again.')
+    }
 
     const programs = JSON.parse(jsonMatch[0])
     return Response.json({ programs })
   } catch (err) {
-    console.error('Profile match error:', err)
+    console.error('Profile match error:', err.message)
     return Response.json({ programs: [], error: err.message }, { status: 500 })
   }
 }
