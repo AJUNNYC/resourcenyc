@@ -11,31 +11,9 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CloseIcon from '@mui/icons-material/Close'
-import HomeIcon from '@mui/icons-material/Home'
-import FastfoodIcon from '@mui/icons-material/Fastfood'
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital'
-import ChildCareIcon from '@mui/icons-material/ChildCare'
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
-import ElectricBoltIcon from '@mui/icons-material/ElectricBolt'
-import SchoolIcon from '@mui/icons-material/School'
 import WorkIcon from '@mui/icons-material/Work'
 import { SideNav } from '@/components/SideNav'
-
-const CATEGORY_ICON_MAP = {
-  Food: FastfoodIcon, Health: LocalHospitalIcon, Housing: HomeIcon,
-  Nutrition: ChildCareIcon, Childcare: SchoolIcon, Utilities: ElectricBoltIcon,
-  Financial: AttachMoneyIcon, Employment: WorkIcon,
-}
-const CATEGORY_COLOR_MAP = {
-  Food: '#E85D04', Health: '#0077B6', Housing: '#7B2FBE',
-  Nutrition: '#C0006A', Childcare: '#B45309', Utilities: '#1D4ED8',
-  Financial: '#047857', Employment: '#4338CA',
-}
-const CATEGORY_BG_MAP = {
-  Food: '#FFF4EE', Health: '#EEF7FC', Housing: '#F5EEFF',
-  Nutrition: '#FFF0F7', Childcare: '#FFFBEB', Utilities: '#EFF6FF',
-  Financial: '#ECFDF5', Employment: '#EEF2FF',
-}
+import { CATEGORY_ICON_MAP, CATEGORY_COLOR_MAP, CATEGORY_BG_MAP } from '@/lib/constants'
 
 function ResultCard({ r, index }) {
   const Icon = CATEGORY_ICON_MAP[r.category] || WorkIcon

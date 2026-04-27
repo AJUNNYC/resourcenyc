@@ -1,7 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { anthropic } from '@/lib/anthropic'
 
 async function fetchPrograms() {
   try {
